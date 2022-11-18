@@ -1,0 +1,3 @@
+rootProject.name = "AudioPlayManagerProject"
+include ':app'
+include ':audioPlaylibrary'
