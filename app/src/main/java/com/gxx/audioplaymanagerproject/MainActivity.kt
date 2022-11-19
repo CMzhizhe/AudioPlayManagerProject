@@ -19,6 +19,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
     private lateinit var tvMusicName: TextView
     private lateinit var btPause: Button
     private lateinit var seekbar:SeekBar
+    private lateinit var speed0_5:TextView
+    private lateinit var speed1:TextView
+    private lateinit var speed1_5:TextView
+    private lateinit var speed2:TextView
     private val musicModelList = mutableListOf<MusicModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +40,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
         tvProgress = this.findViewById<TextView>(R.id.tv_progress)
         tvDuration = this.findViewById<TextView>(R.id.tv_duration);
 
+        speed0_5 = this.findViewById<TextView>(R.id.tv_multiple_0_point_5)
+        speed1 = this.findViewById<TextView>(R.id.tv_multiple_1)
+        speed1_5 = this.findViewById<TextView>(R.id.tv_multiple_1_point5)
+        speed2 = this.findViewById<TextView>(R.id.tv_multiple_2)
+
+        speed0_5.setOnClickListener(this)
+        speed1.setOnClickListener(this)
+        speed1_5.setOnClickListener(this)
+        speed2.setOnClickListener(this)
 
         btPause.setOnClickListener(this)
         tvFirstMusic.setOnClickListener(this)
@@ -88,12 +101,52 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
 
             R.id.tv_first_music -> {//第一个音乐
                 AudioPlayManager.getInstance()
-                    .prepareAssetsAsync(musicModelList.get(0).assetsName, musicModelList.get(0).voiceId, this)
+                    .prepareAssetsAsync(musicModelList.get(0).assetsName, musicModelList.get(0).voiceId,1.0f, this)
+                speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
+                speed1_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
             }
 
             R.id.tv_second_music -> {//第二个音乐
                 AudioPlayManager.getInstance()
-                    .prepareAssetsAsync(musicModelList.get(1).assetsName, musicModelList.get(1).voiceId, this)
+                    .prepareAssetsAsync(musicModelList.get(1).assetsName, musicModelList.get(1).voiceId,2.0f, this)
+                speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
+            }
+
+            R.id.tv_multiple_0_point_5->{
+                AudioPlayManager.getInstance().playSpeed = 0.5f
+                speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
+                speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+            }
+
+            R.id.tv_multiple_1->{
+                AudioPlayManager.getInstance().playSpeed = 1.0f
+                speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
+                speed1_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+            }
+
+            R.id.tv_multiple_1_point5->{
+                AudioPlayManager.getInstance().playSpeed = 1.5f
+                speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
+                speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+            }
+
+            R.id.tv_multiple_2->{
+                AudioPlayManager.getInstance().playSpeed = 2.0f
+                speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed1_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
+                speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
             }
         }
     }
@@ -165,6 +218,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
             if (datum.voiceId == voiceId) {
                 tvMusicName.setText("播放音乐的名称：" + datum.musicName)
                 tvPlayStatus.setText("播放状态：正在播放")
+                btPause.setText("暂停")
                 AudioPlayManager.getInstance().seekTo(datum.progress)
                 break
             }

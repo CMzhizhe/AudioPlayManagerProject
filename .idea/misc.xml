@@ -3,7 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/android_data/AudioPlayManagerProject/app/src/main/res/layout/activity_main.xml" value="0.5536458333333333" />
+        <entry key="..\:/android_data/AudioPlayManagerProject/app/src/main/res/drawable/drawable_border_purple_1dp_solid_transparent.xml" value="0.308" />
+        <entry key="..\:/android_data/AudioPlayManagerProject/app/src/main/res/drawable/layerlist_rectangle_solid_white.xml" value="0.135" />
+        <entry key="..\:/android_data/AudioPlayManagerProject/app/src/main/res/layout/activity_main.xml" value="0.5" />
       </map>
     </option>
   </component>

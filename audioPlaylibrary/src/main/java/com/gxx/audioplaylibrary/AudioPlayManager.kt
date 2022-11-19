@@ -120,10 +120,16 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @date 创建时间: 2022/11/10
      * @author gaoxiaoxiong
      */
-    fun prepareAsync(file: File, voiceId: String?, playListener: OnAudioPlayListener?) {
+    fun prepareAsync(
+        file: File,
+        voiceId: String?,
+        speed: Float = 1.0f,
+        playListener: OnAudioPlayListener?
+    ) {
         val audioVoiceModel = AudioVoiceModel()
         audioVoiceModel.playIngFileUri = Uri.fromFile(file)
         audioVoiceModel.playIngVoiceId = voiceId
+        audioVoiceModel.speed = speed
         this.prepareAsync(audioVoiceModel, playListener)
     }
 
@@ -133,10 +139,16 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @date 创建时间: 2022/11/10
      * @author gaoxiaoxiong
      */
-    fun prepareAsync(remoteUrl: String, voiceId: String?, playListener: OnAudioPlayListener?) {
+    fun prepareAsync(
+        remoteUrl: String,
+        voiceId: String?,
+        speed: Float = 1.0f,
+        playListener: OnAudioPlayListener?
+    ) {
         val audioVoiceModel = AudioVoiceModel()
         audioVoiceModel.playIngVoiceId = voiceId
         audioVoiceModel.playIngRemoteUrl = remoteUrl
+        audioVoiceModel.speed = speed
         this.prepareAsync(audioVoiceModel, playListener)
     }
 
@@ -149,11 +161,13 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
     fun prepareAssetsAsync(
         assetsName: String,
         voiceId: String?,
+        speed: Float = 1.0f,
         playListener: OnAudioPlayListener?
     ) {
         val audioVoiceModel = AudioVoiceModel()
         audioVoiceModel.playIngVoiceId = voiceId
         audioVoiceModel.playIngAssetsName = assetsName
+        audioVoiceModel.speed = speed
         this.prepareAsync(audioVoiceModel, playListener)
     }
 
@@ -172,7 +186,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
         try {
             var musicGranted: Int = -1
             //申请获取焦点
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){//android 8.0
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {//android 8.0
                 musicGranted = mAudioManager.requestAudioFocus(
                     AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                         .setAudioAttributes(
@@ -184,7 +198,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                         .setAcceptsDelayedFocusGain(true)
                         .setOnAudioFocusChangeListener(afChangeListener).build()
                 )
-            }else{
+            } else {
                 musicGranted = mAudioManager.requestAudioFocus(
                     afChangeListener,
                     AudioManager.STREAM_MUSIC,
@@ -193,7 +207,8 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             }
             if (musicGranted != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 if (mWeakOnAudioPlayListener != null && mWeakOnAudioPlayListener!!.get() != null) {
-                    mWeakOnAudioPlayListener!!.get()!!.onVoiceFocusLoss(audioVoiceModel.playIngVoiceId)
+                    mWeakOnAudioPlayListener!!.get()!!
+                        .onVoiceFocusLoss(audioVoiceModel.playIngVoiceId)
                 }
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "暂未获取到音频焦点")
@@ -203,7 +218,6 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             this.audioVoiceModel = audioVoiceModel
             mWeakOnAudioPlayListener = WeakReference<OnAudioPlayListener>(playListener)
             mMediaPlayer = MediaPlayer()
-            playSpeed = audioVoiceModel.speed
             if (Build.VERSION.SDK_INT >= O_MR1) {
                 mMediaPlayer!!.setAudioAttributes(
                     AudioAttributes.Builder()
@@ -211,7 +225,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                         .setUsage(AudioAttributes.USAGE_MEDIA)
                         .build()
                 )
-            }else{
+            } else {
                 mMediaPlayer!!.setAudioStreamType(AudioManager.STREAM_MUSIC)
             }
             mMediaPlayer!!.setLooping(false)
@@ -339,7 +353,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             }
             var musicGranted: Int = -1
             //申请获取焦点
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){//android 8.0
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {//android 8.0
                 musicGranted = mAudioManager.requestAudioFocus(
                     AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                         .setAudioAttributes(
@@ -351,7 +365,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                         .setAcceptsDelayedFocusGain(true)
                         .setOnAudioFocusChangeListener(afChangeListener).build()
                 )
-            }else{
+            } else {
                 musicGranted = mAudioManager.requestAudioFocus(
                     afChangeListener,
                     AudioManager.STREAM_MUSIC,
@@ -382,7 +396,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                             .setUsage(AudioAttributes.USAGE_MEDIA)
                             .build()
                     )
-                }else{
+                } else {
                     mMediaPlayer!!.setAudioStreamType(AudioManager.STREAM_VOICE_CALL) //这样设置，比不设置的好处是，声音会大点
                 }
             } else {
@@ -393,7 +407,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                             .setUsage(AudioAttributes.USAGE_MEDIA)
                             .build()
                     )
-                }else{
+                } else {
                     mMediaPlayer!!.setAudioStreamType(AudioManager.STREAM_MUSIC)
                 }
             }
@@ -405,7 +419,9 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                         Log.d(TAG, "createEarpieceOrSpeakerMediaPlayer->设置播放位置完成，准备播放")
                     }
                     mp.start()
-                    playSpeed = audioVoiceModel!!.speed
+                    if (audioVoiceModel!!.speed != playSpeed) {
+                        playSpeed = audioVoiceModel!!.speed
+                    }
                 }
             })
             mMediaPlayer!!.setOnPreparedListener(object : OnPreparedListener {
@@ -415,7 +431,9 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                     }
                     if (isEarpiece) {
                         mp.start()
-                        playSpeed = audioVoiceModel!!.speed
+                        if (audioVoiceModel!!.speed != playSpeed) {
+                            playSpeed = audioVoiceModel!!.speed
+                        }
                     } else {
                         mp.seekTo(position)
                     }
@@ -596,8 +614,8 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description activity 的暂停
      */
     fun onActivityLifePause() {
-        if(BuildConfig.DEBUG){
-           Log.d(TAG, "activity 调用pase了");
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "activity 调用pase了");
         }
         unregisterListenerProximity()
     }
@@ -608,7 +626,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description activity 的恢复
      */
     fun onActivityLifeResume() {
-        if(BuildConfig.DEBUG){
+        if (BuildConfig.DEBUG) {
             Log.d(TAG, "activity 调用resume了");
         }
         registerListenerProximity()
@@ -646,9 +664,18 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * 合法时间点 Initialized, Prepared, Started, Paused, PlaybackCompleted, Error
      */
     var playSpeed: Float
-        get() = if (audioVoiceModel == null) {
-            1.0f
-        } else audioVoiceModel!!.speed
+        get() {
+            if (audioVoiceModel == null || mMediaPlayer == null) {
+                return 1.0f
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val params: PlaybackParams = mMediaPlayer!!.getPlaybackParams()
+                    return params.speed
+                } else {
+                    return audioVoiceModel!!.speed
+                }
+            }
+        }
         set(speed) {
             if (mMediaPlayer == null || audioVoiceModel == null || !isPlayIng) {
                 return
@@ -693,6 +720,9 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             Log.d(TAG, "开始播放")
         }
         mp.start()
+        if (audioVoiceModel!!.speed != playSpeed) {
+            playSpeed = audioVoiceModel!!.speed
+        }
     }
 
     override fun onPrepared(mp: MediaPlayer) {
@@ -787,15 +817,15 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
 
 
     /**
-      * @date 创建时间: 2022/11/19
-      * @author gaoxiaoxiong
-      * @description 注册耳机插入的广播接收
+     * @date 创建时间: 2022/11/19
+     * @author gaoxiaoxiong
+     * @description 注册耳机插入的广播接收
      */
-    private fun registerHeadsetPlugReceiver(){
+    private fun registerHeadsetPlugReceiver() {
         mHeadsetChangeReceiver.setOnHeadsetChangeReceiverListener(this)
         val intentFilter = IntentFilter()
         intentFilter.addAction("android.intent.action.HEADSET_PLUG")
-        mApplication.registerReceiver(mHeadsetChangeReceiver,intentFilter)
+        mApplication.registerReceiver(mHeadsetChangeReceiver, intentFilter)
     }
 
     /**
@@ -819,14 +849,14 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @param isEarpiece true 插入耳机
      */
     override fun onHeadsetChangeReceiver(isEarpiece: Boolean) {
-        if(BuildConfig.DEBUG){
-           Log.d(TAG, "接收到耳机的拔插事件->是否插入耳机->"+isEarpiece);
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "接收到耳机的拔插事件->是否插入耳机->" + isEarpiece);
         }
-       if (isEarpiece){
-           changeToEarpiece()
-       }else{
-           changeToSpeaker()
-       }
+        if (isEarpiece) {
+            changeToEarpiece()
+        } else {
+            changeToSpeaker()
+        }
     }
 
 
