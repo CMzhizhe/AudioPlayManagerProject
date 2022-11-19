@@ -255,6 +255,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
     override fun onResume() {
         super.onResume()
         AudioPlayManager.getInstance().onActivityLifeResume()
+        btPause.setText("恢复")
     }
 
     override fun onPause() {
