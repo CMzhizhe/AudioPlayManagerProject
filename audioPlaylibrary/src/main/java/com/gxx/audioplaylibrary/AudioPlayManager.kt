@@ -117,6 +117,8 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
     /**
      * @param voiceId 用户自定义的ID
      * @param file    播放语音的文件
+     * @param speed 播放倍数
+     * @param playListener 播放结果监听
      * @date 创建时间: 2022/11/10
      * @author gaoxiaoxiong
      */
@@ -136,6 +138,8 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
     /**
      * @param remoteUrl 服务器提供的地址
      * @param voiceId   用户自定义的ID
+     * @param speed 播放倍数
+     * @param playListener 播放结果监听
      * @date 创建时间: 2022/11/10
      * @author gaoxiaoxiong
      */
@@ -157,6 +161,9 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @author gaoxiaoxiong
      * @description 打开assets文件夹下面的音乐
      * @param assetsName assets文件下的音乐文件
+     * @param voiceId 用户自定义的语音ID
+     * @param speed 播放倍数
+     * @param playListener 播放结果回调
      */
     fun prepareAssetsAsync(
         assetsName: String,
@@ -178,6 +185,13 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 异步加载语音
      */
     fun prepareAsync(audioVoiceModel: AudioVoiceModel, playListener: OnAudioPlayListener?) {
+        if (audioVoiceModel.playIngAssetsName.isNullOrEmpty() && audioVoiceModel.playIngFileUri == null && audioVoiceModel.playIngRemoteUrl.isNullOrEmpty()){
+            if(BuildConfig.DEBUG){
+               Log.d(TAG, "当前无法播放，所有的参数都是空类型");
+            }
+            return
+        }
+
         //设置亮屏 + 普通模式
         setScreenOn()
         mAudioManager.setSpeakerphoneOn(true)
