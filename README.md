@@ -25,6 +25,11 @@
 implementation 'com.github.CMzhizhe:AudioPlayManagerProject:v1.0.0'
 ```
 
+初始化
+```
+   AudioPlayManager.Builder().setApplication(this.application).build()
+```
+
 提供的方法
 ```
  /**
