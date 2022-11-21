@@ -308,14 +308,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
 
     override fun onResume() {
         super.onResume()
-        AudioPlayManager.getInstance().onActivityLifeResume()
+        AudioPlayManager.getInstance().registerListenerProximity()
         btPause.setText("恢复")
     }
 
     override fun onPause() {
         super.onPause()
         AudioPlayManager.getInstance().pause()
-        AudioPlayManager.getInstance().onActivityLifePause()
+        AudioPlayManager.getInstance().unregisterListenerProximity()
     }
 
     /**

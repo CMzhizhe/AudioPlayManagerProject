@@ -229,6 +229,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                 }
                 return
             }
+            registerListenerProximity()
             this.audioVoiceModel = audioVoiceModel
             mWeakOnAudioPlayListener = WeakReference<OnAudioPlayListener>(playListener)
             mMediaPlayer = MediaPlayer()
@@ -622,29 +623,6 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
         }
     }
 
-    /**
-     * @date 创建时间: 2022/11/18
-     * @author gaoxiaoxiong
-     * @description activity 的暂停
-     */
-    fun onActivityLifePause() {
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "activity 调用pase了");
-        }
-        unregisterListenerProximity()
-    }
-
-    /**
-     * @date 创建时间: 2022/11/18
-     * @author gaoxiaoxiong
-     * @description activity 的恢复
-     */
-    fun onActivityLifeResume() {
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "activity 调用resume了");
-        }
-        registerListenerProximity()
-    }
 
     /**
      * @date 创建时间: 2022/11/11
@@ -664,11 +642,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
         get() = if (audioVoiceModel == null) {
             null
         } else audioVoiceModel!!.playIngVoiceId
-    /**
-     * @date 创建时间: 2022/11/13
-     * @author gaoxiaoxiong
-     * @description 返回速度
-     */
+
     /**
      * @param speed 倍数
      * @date 创建时间: 2022/11/13
@@ -777,9 +751,9 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
     /**
      * @date 创建时间: 2022/11/18
      * @author gaoxiaoxiong
-     * @description 注册
+     * @description 注册传感器
      */
-    private fun registerListenerProximity() {
+    fun registerListenerProximity() {
         mSensorManager.registerListener(
             this,
             mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
@@ -792,11 +766,11 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @author gaoxiaoxiong
      * @description 解除传感器
      */
-    private fun unregisterListenerProximity() {
+    fun unregisterListenerProximity() {
         mSensorManager.unregisterListener(
             this,
             mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
-        ) //防止用户退出了，还在监听
+        )
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "取消注册绑定监听")
         }
