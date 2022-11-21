@@ -65,8 +65,8 @@ implementation 'com.github.CMzhizhe:AudioPlayManagerProject:v1.0.0'
 
     AudioPlayManager.getInstance().seekTo()//开始播放音乐 &&设置播放进度
     AudioPlayManager.getInstance().playSpeed//设置播放速度
-    AudioPlayManager.getInstance().onActivityLifeResume() //需要在activity调用，目的注册感光监听
-    AudioPlayManager.getInstance().onActivityLifePause()//需要在activity调用，目的移除感光监听
+    AudioPlayManager.getInstance().registerListenerProximity() //需要在activity onResume调用，目的注册感光监听
+    AudioPlayManager.getInstance().unregisterListenerProximity()//需要在activity onPause调用，目的移除感光监听
     AudioPlayManager.getInstance().pause()//暂停音乐
     AudioPlayManager.getInstance().releaseAll()//停止播放，在onDestroy调用
 ```
