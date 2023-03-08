@@ -185,9 +185,9 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 异步加载语音
      */
     fun prepareAsync(audioVoiceModel: AudioVoiceModel, playListener: OnAudioPlayListener?) {
-        if (audioVoiceModel.playIngAssetsName.isNullOrEmpty() && audioVoiceModel.playIngFileUri == null && audioVoiceModel.playIngRemoteUrl.isNullOrEmpty()){
-            if(BuildConfig.DEBUG){
-               Log.d(TAG, "当前无法播放，所有的参数都是空类型");
+        if (audioVoiceModel.playIngAssetsName.isNullOrEmpty() && audioVoiceModel.playIngFileUri == null && audioVoiceModel.playIngRemoteUrl.isNullOrEmpty()) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "当前无法播放，所有的参数都是空类型");
             }
             return
         }
@@ -331,7 +331,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
     /**
      * 切换到听筒
      */
-    fun changeToEarpiece() {
+    private fun changeToEarpiece() {
         if (mMediaPlayer == null || audioVoiceModel == null) {
             return
         }
@@ -343,12 +343,32 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
         mAudioManager.setSpeakerphoneOn(false) //关闭扬声器
         //通话模式
         mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION)
-
         //切成电话
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "重置语音，切成电话")
         }
         createEarpieceOrSpeakerMediaPlayer(true)
+    }
+
+    /**
+     * @date 创建时间: 2023/3/8
+     * @author gaoxiaoxiong
+     * @description 设置媒体音量大小
+     */
+    fun setStreamVolume(volume: Int) {
+        if (mAudioManager.isSpeakerphoneOn) {//扬声器
+            mAudioManager.setStreamVolume(
+                AudioManager.STREAM_MUSIC,
+                volume,
+                AudioManager.FLAG_PLAY_SOUND
+            )
+        } else {//听筒
+            mAudioManager.setStreamVolume(
+                AudioManager.MODE_IN_COMMUNICATION,
+                volume,
+                AudioManager.FLAG_PLAY_SOUND
+            )
+        }
     }
 
     /**
