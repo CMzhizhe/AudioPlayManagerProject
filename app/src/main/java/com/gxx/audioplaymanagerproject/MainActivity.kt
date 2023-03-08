@@ -7,10 +7,11 @@ import android.widget.Button
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.gxx.audioplaylibrary.AudioPlayManager
 import com.gxx.audioplaylibrary.inter.OnAudioPlayListener
 import java.util.*
 
-class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBarChangeListener, OnAudioPlayListener {
+class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBarChangeListener, OnAudioPlayListener,VolumeChangeObserver.VolumeChangeListener {
     private val TAG = "MainActivity"
     private lateinit var tvProgress: TextView
     private lateinit var tvDuration: TextView
@@ -23,6 +24,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
     private lateinit var speed1_5:TextView
     private lateinit var speed2:TextView
     private val musicModelList = mutableListOf<MusicModel>()
+
+    private var mVolumeChangeObserver: VolumeChangeObserver? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -68,6 +72,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
         musicModelList.add(musicModel0)
         musicModelList.add(musicModel1)
 
+        if (mVolumeChangeObserver == null){
+            mVolumeChangeObserver = VolumeChangeObserver(this)
+        }
+        mVolumeChangeObserver!!.volumeChangeListener = this
 
     }
 
@@ -309,12 +317,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
         super.onResume()
         AudioPlayManager.getInstance().registerListenerProximity()
         btPause.setText("恢复")
+        mVolumeChangeObserver?.registerReceiver()
     }
 
     override fun onPause() {
         super.onPause()
         AudioPlayManager.getInstance().pause()
         AudioPlayManager.getInstance().unregisterListenerProximity()
+        mVolumeChangeObserver?.unregisterReceiver()
     }
 
     /**
@@ -339,5 +349,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
     override fun onDestroy() {
         super.onDestroy()
         AudioPlayManager.getInstance().releaseAll()
+    }
+
+
+    /**
+     * @date 创建时间: 2023/3/8
+     * @author gaoxiaoxiong
+     * @description 音量改变回调
+     */
+
+    override fun onVolumeChanged(volume: Int) {
+        AudioPlayManager.getInstance().setStreamVolume(volume)
     }
 }
