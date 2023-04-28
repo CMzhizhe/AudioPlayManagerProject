@@ -41,9 +41,9 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
     private val TAG = "AudioPlayManager"
     private var mMediaPlayer: MediaPlayer? = null
     private var mWeakOnAudioPlayListener: WeakReference<OnAudioPlayListener>? = null
-    private var mSensorManager: SensorManager
-    private var mAudioManager: AudioManager
-    private var mPowerManager: PowerManager
+    private var mSensorManager: SensorManager?=null
+    private var mAudioManager: AudioManager?=null
+    private var mPowerManager: PowerManager?=null
     private var _wakeLock: PowerManager.WakeLock? = null
     private var mTimer: Timer? = null
     private var mApplication: Application
@@ -61,9 +61,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
 
     init {
         mApplication = application
-        mPowerManager = mApplication.getSystemService(Context.POWER_SERVICE) as PowerManager
-        mAudioManager = mApplication.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        mSensorManager = mApplication.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        initAudioPowerSensor()
         registerHeadsetPlugReceiver()//注册插入耳机监听
         if (mHandler == null) {
             mHandler = Handler(application.mainLooper)
@@ -83,33 +81,49 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
         }
     }
 
+    /**
+     * @date 创建时间: 2023/4/28
+     * @author gaoxiaoxiong
+     * @description 初始化媒体，感应器
+     */
+    private fun initAudioPowerSensor(){
+        if (mPowerManager == null){
+            mPowerManager = mApplication.getSystemService(Context.POWER_SERVICE) as PowerManager
+        }
+        if (mAudioManager == null){
+            mAudioManager = mApplication.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        }
+
+        if (mSensorManager == null){
+            mSensorManager = mApplication.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        }
+    }
+
     private val afChangeListener: AudioManager.OnAudioFocusChangeListener =
-        object : AudioManager.OnAudioFocusChangeListener {
-            override fun onAudioFocusChange(focusChange: Int) {
-                when (focusChange) {
-                    AudioManager.AUDIOFOCUS_GAIN -> {}
-                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                        //暂时失去焦点，暂停播放音乐（将needRestart设置为true）
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "失去焦点")
-                        }
-                        if (mWeakOnAudioPlayListener != null && mWeakOnAudioPlayListener!!.get() != null && audioVoiceModel != null) {
-                            mWeakOnAudioPlayListener!!.get()!!
-                                .onVoiceFocusLoss(audioVoiceModel!!.playIngVoiceId)
-                        }
-                        stop()
+        AudioManager.OnAudioFocusChangeListener { focusChange ->
+            when (focusChange) {
+                AudioManager.AUDIOFOCUS_GAIN -> {}
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                    //暂时失去焦点，暂停播放音乐（将needRestart设置为true）
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "失去焦点")
                     }
-                    AudioManager.AUDIOFOCUS_LOSS -> {
-                        //暂停播放音乐，不再继续播放
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "失去焦点")
-                        }
-                        if (mWeakOnAudioPlayListener != null && mWeakOnAudioPlayListener!!.get() != null && audioVoiceModel != null) {
-                            mWeakOnAudioPlayListener!!.get()!!
-                                .onVoiceFocusLoss(audioVoiceModel!!.playIngVoiceId)
-                        }
-                        stop()
+                    if (mWeakOnAudioPlayListener != null && mWeakOnAudioPlayListener!!.get() != null && audioVoiceModel != null) {
+                        mWeakOnAudioPlayListener!!.get()!!
+                            .onVoiceFocusLoss(audioVoiceModel!!.playIngVoiceId)
                     }
+                    stop()
+                }
+                AudioManager.AUDIOFOCUS_LOSS -> {
+                    //暂停播放音乐，不再继续播放
+                    if (BuildConfig.DEBUG) {
+                        Log.d(TAG, "失去焦点")
+                    }
+                    if (mWeakOnAudioPlayListener != null && mWeakOnAudioPlayListener!!.get() != null && audioVoiceModel != null) {
+                        mWeakOnAudioPlayListener!!.get()!!
+                            .onVoiceFocusLoss(audioVoiceModel!!.playIngVoiceId)
+                    }
+                    stop()
                 }
             }
         }
@@ -191,17 +205,23 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             }
             return
         }
-
+        initAudioPowerSensor()
+        if (mAudioManager == null){
+            if(BuildConfig.DEBUG){
+              Log.d(TAG, "mAudioManager == null");
+            }
+            return
+        }
         //设置亮屏 + 普通模式
         setScreenOn()
-        mAudioManager.setSpeakerphoneOn(true)
-        mAudioManager.setMode(AudioManager.MODE_NORMAL)
+        mAudioManager!!.setSpeakerphoneOn(true)
+        mAudioManager!!.setMode(AudioManager.MODE_NORMAL)
         resetMediaPlayer() //重置mediaplayer
         try {
             var musicGranted: Int = -1
             //申请获取焦点
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {//android 8.0
-                musicGranted = mAudioManager.requestAudioFocus(
+                musicGranted = mAudioManager!!.requestAudioFocus(
                     AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                         .setAudioAttributes(
                             AudioAttributes.Builder()
@@ -213,7 +233,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                         .setOnAudioFocusChangeListener(afChangeListener).build()
                 )
             } else {
-                musicGranted = mAudioManager.requestAudioFocus(
+                musicGranted = mAudioManager!!.requestAudioFocus(
                     afChangeListener,
                     AudioManager.STREAM_MUSIC,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
@@ -271,6 +291,10 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
 
     @TargetApi(11)
     override fun onSensorChanged(event: SensorEvent) {
+        if (mSensorManager == null){
+            return
+        }
+
         // 如果耳机已插入，设置距离传感器失效
         if (isHeadphonesPlugged) {
             if (BuildConfig.DEBUG) {
@@ -284,13 +308,13 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                 if (BuildConfig.DEBUG) {
                     Log.d(
                         TAG,
-                        "range = " + range + "defaultRange = " + mSensorManager.getDefaultSensor(
+                        "range = " + range + "defaultRange = " + mSensorManager!!.getDefaultSensor(
                             Sensor.TYPE_PROXIMITY
                         )
                             .getMaximumRange()
                     )
                 }
-                if (range.toDouble() >= mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
+                if (range.toDouble() >= mSensorManager!!.getDefaultSensor(Sensor.TYPE_PROXIMITY)
                         .getMaximumRange()
                 ) { // 远离手机
                     if (BuildConfig.DEBUG) {
@@ -312,16 +336,16 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * 切换到外放
      */
     private fun changeToSpeaker() {
-        if (mMediaPlayer == null || audioVoiceModel == null) {
+        if (mMediaPlayer == null || audioVoiceModel == null || mAudioManager == null) {
             return
         }
-        if (mAudioManager.getMode() == AudioManager.MODE_NORMAL) { //普通模式，喇叭播放
+        if (mAudioManager!!.getMode() == AudioManager.MODE_NORMAL) { //普通模式，喇叭播放
             return
         }
         setScreenOn()
         //打开扬声器
-        mAudioManager.setSpeakerphoneOn(true)
-        mAudioManager.setMode(AudioManager.MODE_NORMAL)
+        mAudioManager!!.setSpeakerphoneOn(true)
+        mAudioManager!!.setMode(AudioManager.MODE_NORMAL)
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "重置语音，切成扩音")
         }
@@ -332,17 +356,17 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * 切换到听筒
      */
     private fun changeToEarpiece() {
-        if (mMediaPlayer == null || audioVoiceModel == null) {
+        if (mMediaPlayer == null || audioVoiceModel == null || mAudioManager == null) {
             return
         }
-        if (mAudioManager.getMode() == AudioManager.MODE_IN_COMMUNICATION) { //通话模式，包括音/视频、VoIP通话
+        if (mAudioManager!!.getMode() == AudioManager.MODE_IN_COMMUNICATION) { //通话模式，包括音/视频、VoIP通话
             return
         }
         setScreenOff()
         //切换到听筒
-        mAudioManager.setSpeakerphoneOn(false) //关闭扬声器
+        mAudioManager!!.setSpeakerphoneOn(false) //关闭扬声器
         //通话模式
-        mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION)
+        mAudioManager!!.setMode(AudioManager.MODE_IN_COMMUNICATION)
         //切成电话
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "重置语音，切成电话")
@@ -356,14 +380,17 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 设置媒体音量大小
      */
     fun setStreamVolume(volume: Int) {
-        if (mAudioManager.isSpeakerphoneOn) {//扬声器
-            mAudioManager.setStreamVolume(
+        if (mAudioManager == null){
+            return
+        }
+        if (mAudioManager!!.isSpeakerphoneOn) {//扬声器
+            mAudioManager!!.setStreamVolume(
                 AudioManager.STREAM_MUSIC,
                 volume,
                 AudioManager.FLAG_PLAY_SOUND
             )
         } else {//听筒
-            mAudioManager.setStreamVolume(
+            mAudioManager!!.setStreamVolume(
                 AudioManager.MODE_IN_COMMUNICATION,
                 volume,
                 AudioManager.FLAG_PLAY_SOUND
@@ -378,6 +405,9 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 创建属于贴耳或者是扩音的MediaPlayer
      */
     private fun createEarpieceOrSpeakerMediaPlayer(isEarpiece: Boolean) {
+        if (mAudioManager == null){
+            return
+        }
         try {
             val position =
                 if (mMediaPlayer!!.isPlaying()) mMediaPlayer!!.getCurrentPosition() else -1
@@ -389,7 +419,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             var musicGranted: Int = -1
             //申请获取焦点
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {//android 8.0
-                musicGranted = mAudioManager.requestAudioFocus(
+                musicGranted = mAudioManager!!.requestAudioFocus(
                     AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                         .setAudioAttributes(
                             AudioAttributes.Builder()
@@ -401,7 +431,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                         .setOnAudioFocusChangeListener(afChangeListener).build()
                 )
             } else {
-                musicGranted = mAudioManager.requestAudioFocus(
+                musicGranted = mAudioManager!!.requestAudioFocus(
                     afChangeListener,
                     AudioManager.STREAM_MUSIC,
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
@@ -512,19 +542,23 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
     @get:SuppressLint("WrongConstant")
     private val isHeadphonesPlugged: Boolean
         private get() {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val audioDevices: Array<AudioDeviceInfo> =
-                    mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL)
-                for (deviceInfo in audioDevices) {
-                    if (deviceInfo.getType() == AudioDeviceInfo.TYPE_WIRED_HEADPHONES
-                        || deviceInfo.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET
-                    ) {
-                        return true
+            if (mAudioManager == null){
+                return false
+            }else{
+                return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val audioDevices: Array<AudioDeviceInfo> =
+                        mAudioManager!!.getDevices(AudioManager.GET_DEVICES_ALL)
+                    for (deviceInfo in audioDevices) {
+                        if (deviceInfo.getType() == AudioDeviceInfo.TYPE_WIRED_HEADPHONES
+                            || deviceInfo.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET
+                        ) {
+                            return true
+                        }
                     }
+                    false
+                } else {
+                    mAudioManager!!.isWiredHeadsetOn()
                 }
-                false
-            } else {
-                mAudioManager.isWiredHeadsetOn()
             }
         }
 
@@ -589,10 +623,12 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      */
     @TargetApi(21)
     private fun setScreenOff() {
+        if (mPowerManager == null){
+            return
+        }
         if (_wakeLock == null) {
             if (Build.VERSION.SDK_INT >= 21) {
-                _wakeLock =
-                    mPowerManager.newWakeLock(
+                _wakeLock = mPowerManager!!.newWakeLock(
                         PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK,
                         "gxx:AudioPlayManager"
                     )
@@ -650,7 +686,10 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 取消注册音频竞争
      */
     private fun abandonAudioFocus() {
-        mAudioManager.abandonAudioFocus(afChangeListener)
+        if (mAudioManager == null){
+            return
+        }
+        mAudioManager!!.abandonAudioFocus(afChangeListener)
     }
 
     /**
@@ -774,9 +813,12 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 注册传感器
      */
     fun registerListenerProximity() {
-        mSensorManager.registerListener(
+        if (mSensorManager == null){
+            return
+        }
+        mSensorManager!!.registerListener(
             this,
-            mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),
+            mSensorManager!!.getDefaultSensor(Sensor.TYPE_PROXIMITY),
             SensorManager.SENSOR_DELAY_NORMAL
         )
     }
@@ -787,9 +829,12 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 解除传感器
      */
     fun unregisterListenerProximity() {
-        mSensorManager.unregisterListener(
+        if (mSensorManager == null){
+            return
+        }
+        mSensorManager!!.unregisterListener(
             this,
-            mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
+            mSensorManager!!.getDefaultSensor(Sensor.TYPE_PROXIMITY)
         )
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "取消注册绑定监听")
