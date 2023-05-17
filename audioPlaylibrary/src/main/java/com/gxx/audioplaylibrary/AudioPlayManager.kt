@@ -750,11 +750,11 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 完成播放
      */
     override fun onCompletion(mp: MediaPlayer) {
+        stop()
         if (mWeakOnAudioPlayListener != null && mWeakOnAudioPlayListener!!.get() != null && audioVoiceModel != null) {
             mWeakOnAudioPlayListener!!.get()!!.onVoiceComplete(audioVoiceModel!!.playIngVoiceId)
             mWeakOnAudioPlayListener!!.clear()
         }
-        stop()
     }
 
     /**
