@@ -22,7 +22,7 @@
 ```
 添加依赖
 ```
-implementation 'com.github.CMzhizhe:AudioPlayManagerProject:v1.0.4'
+implementation 'com.github.CMzhizhe:AudioPlayManagerProject:v1.0.5'
 ```
 
 初始化
