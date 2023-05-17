@@ -17,6 +17,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION_CODES.O_MR1
 import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
 import com.gxx.audioplaylibrary.broadcastreceiver.HeadsetChangeReceiver
@@ -112,7 +113,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                         mWeakOnAudioPlayListener!!.get()!!
                             .onVoiceFocusLoss(audioVoiceModel!!.playIngVoiceId)
                     }
-                    stop()
+                    stop(null)
                 }
                 AudioManager.AUDIOFOCUS_LOSS -> {
                     //暂停播放音乐，不再继续播放
@@ -123,7 +124,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                         mWeakOnAudioPlayListener!!.get()!!
                             .onVoiceFocusLoss(audioVoiceModel!!.playIngVoiceId)
                     }
-                    stop()
+                    stop(null)
                 }
             }
         }
@@ -445,7 +446,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                 if (BuildConfig.DEBUG) {
                     Log.d(TAG, "暂未获取到音频焦点")
                 }
-                stop()
+                stop(null)
                 resetMediaPlayer()
                 return
             }
@@ -662,7 +663,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @description 暂停，start状态与pause状态是异步切换
      */
     fun pause() {
-        if (mMediaPlayer != null && mMediaPlayer!!.isPlaying()) {
+        if (mMediaPlayer != null && mMediaPlayer!!.isPlaying) {
             mMediaPlayer!!.pause()
         }
     }
@@ -747,13 +748,12 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
     /**
      * @date 创建时间: 2022/11/11
      * @author gaoxiaoxiong
-     * @description 完成播放
+     * @description 完成播放，这里完成播放的回调
      */
     override fun onCompletion(mp: MediaPlayer) {
-        stop()
+        stop(mp)
         if (mWeakOnAudioPlayListener != null && mWeakOnAudioPlayListener!!.get() != null && audioVoiceModel != null) {
             mWeakOnAudioPlayListener!!.get()!!.onVoiceComplete(audioVoiceModel!!.playIngVoiceId)
-            mWeakOnAudioPlayListener!!.clear()
         }
     }
 
@@ -786,7 +786,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             mWeakOnAudioPlayListener!!.get()!!
                 .onVoiceError(audioVoiceModel!!.playIngVoiceId, what, extra)
         }
-        stop()
+        stop(mp)
         resetMediaPlayer()
         return true
     }
@@ -795,16 +795,21 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
      * @date 创建时间: 2022/11/11
      * @author gaoxiaoxiong
      * @description 停止播放，调用停止播放后，prepare() 或 prepareAsync()进入Prepared状态后，才能播放音频
+     * @param mp 媒体播放
      */
-    private fun stop() {
-        if (mMediaPlayer != null) {
-            if (mMediaPlayer!!.isPlaying()) {
+    private fun stop(mp: MediaPlayer?) {
+        if (mp!=null){
+            if (mp.isPlaying) {
+                mp.stop()
+            }
+        }else if (mMediaPlayer!=null){
+            if (mMediaPlayer!!.isPlaying) {
                 mMediaPlayer!!.stop()
             }
-            unregisterListenerProximity()
-            abandonAudioFocus() //取消音频竞争
-            releaseTimer()
         }
+        unregisterListenerProximity()
+        abandonAudioFocus() //取消音频竞争
+        releaseTimer()
     }
 
     /**
@@ -890,7 +895,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
         if (mWeakOnAudioPlayListener != null) {
             mWeakOnAudioPlayListener!!.clear()
         }
-        stop()
+        stop(null)
         resetMediaPlayer()
         audioVoiceModel = null
     }
