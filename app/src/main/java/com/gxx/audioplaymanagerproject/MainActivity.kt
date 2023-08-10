@@ -9,20 +9,21 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.gxx.audioplaylibrary.AudioPlayManager
 import com.gxx.audioplaylibrary.inter.OnAudioPlayListener
-import java.util.*
+import java.util.Locale
 
-class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBarChangeListener, OnAudioPlayListener,VolumeChangeObserver.VolumeChangeListener {
+class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBarChangeListener,
+    OnAudioPlayListener, VolumeChangeObserver.VolumeChangeListener {
     private val TAG = "MainActivity"
     private lateinit var tvProgress: TextView
     private lateinit var tvDuration: TextView
     private lateinit var tvPlayStatus: TextView
     private lateinit var tvMusicName: TextView
     private lateinit var btPause: Button
-    private lateinit var seekbar:SeekBar
-    private lateinit var speed0_5:TextView
-    private lateinit var speed1:TextView
-    private lateinit var speed1_5:TextView
-    private lateinit var speed2:TextView
+    private lateinit var seekbar: SeekBar
+    private lateinit var speed0_5: TextView
+    private lateinit var speed1: TextView
+    private lateinit var speed1_5: TextView
+    private lateinit var speed2: TextView
     private val musicModelList = mutableListOf<MusicModel>()
 
     private var mVolumeChangeObserver: VolumeChangeObserver? = null
@@ -57,6 +58,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
         tvFirstMusic.setOnClickListener(this)
         tvSecondMusic.setOnClickListener(this)
 
+        findViewById<View>(R.id.telephone_receiver_play_auto).setOnClickListener(this)
+        findViewById<View>(R.id.telephone_receiver_play).setOnClickListener(this)
+        findViewById<View>(R.id.telephone_receiver_play_no).setOnClickListener(this)
         val musicModel0 = MusicModel()
         musicModel0.assetsName = "pianzi.mp3"
         musicModel0.musicName = "骗子"
@@ -72,7 +76,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
         musicModelList.add(musicModel0)
         musicModelList.add(musicModel1)
 
-        if (mVolumeChangeObserver == null){
+        if (mVolumeChangeObserver == null) {
             mVolumeChangeObserver = VolumeChangeObserver(this)
         }
         mVolumeChangeObserver!!.volumeChangeListener = this
@@ -106,9 +110,27 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
                 }
             }
 
+            R.id.telephone_receiver_play_auto -> {
+                AudioPlayManager.getInstance().setTelephoneReceiverPlay(null)
+            }
+
+            R.id.telephone_receiver_play -> {
+                AudioPlayManager.getInstance().setTelephoneReceiverPlay(true)
+            }
+
+            R.id.telephone_receiver_play_no -> {
+                AudioPlayManager.getInstance().setTelephoneReceiverPlay(false)
+            }
+
             R.id.tv_first_music -> {//第一个音乐
                 AudioPlayManager.getInstance()
-                    .prepareAssetsAsync(musicModelList.get(0).assetsName, musicModelList.get(0).voiceId,1.0f, this)
+                    .prepareAssetsAsync(
+                        musicModelList.get(0).assetsName,
+                        musicModelList.get(0).voiceId,
+                        1.0f,
+                        true,
+                        this
+                    )
                 speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
                 speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
                 speed1_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
@@ -117,14 +139,20 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
 
             R.id.tv_second_music -> {//第二个音乐
                 AudioPlayManager.getInstance()
-                    .prepareAssetsAsync(musicModelList.get(1).assetsName, musicModelList.get(1).voiceId,2.0f, this)
+                    .prepareAssetsAsync(
+                        musicModelList.get(1).assetsName,
+                        musicModelList.get(1).voiceId,
+                        2.0f,
+                        false,
+                        this
+                    )
                 speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
                 speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
                 speed1_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
                 speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
             }
 
-            R.id.tv_multiple_0_point_5->{
+            R.id.tv_multiple_0_point_5 -> {
                 AudioPlayManager.getInstance().playSpeed = 0.5f
                 speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
                 speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
@@ -132,7 +160,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
                 speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
             }
 
-            R.id.tv_multiple_1->{
+            R.id.tv_multiple_1 -> {
                 AudioPlayManager.getInstance().playSpeed = 1.0f
                 speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
                 speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_purple)
@@ -140,7 +168,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
                 speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
             }
 
-            R.id.tv_multiple_1_point5->{
+            R.id.tv_multiple_1_point5 -> {
                 AudioPlayManager.getInstance().playSpeed = 1.5f
                 speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
                 speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
@@ -148,7 +176,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
                 speed2.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
             }
 
-            R.id.tv_multiple_2->{
+            R.id.tv_multiple_2 -> {
                 AudioPlayManager.getInstance().playSpeed = 2.0f
                 speed0_5.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
                 speed1.setBackgroundResource(R.drawable.layerlist_rectangle_solid_white_border_1dp_gray)
@@ -281,7 +309,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
      */
     override fun onVoiceError(voiceId: String?, what: Int, extra: Int) {
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "播放错误的音乐，voiceId = " + voiceId + ",what = " + what + ",extra = " + extra)
+            Log.d(
+                TAG,
+                "播放错误的音乐，voiceId = " + voiceId + ",what = " + what + ",extra = " + extra
+            )
         }
         for (datum in musicModelList) {
             if (datum.voiceId == voiceId) {
@@ -340,7 +371,13 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, SeekBar.OnSeekBa
         } else if (seconds < 3600) {
             String.format(Locale.getDefault(), "%02d:%02d", seconds / 60, seconds % 60)
         } else {
-            String.format(Locale.getDefault(), "%02d:%02d:%02d", seconds / 3600, seconds % 3600 / 60, seconds % 60)
+            String.format(
+                Locale.getDefault(),
+                "%02d:%02d:%02d",
+                seconds / 3600,
+                seconds % 3600 / 60,
+                seconds % 60
+            )
         }
         return standardTime
     }
