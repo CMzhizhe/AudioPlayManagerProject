@@ -316,10 +316,10 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             return
         }
         if (isProximitySensor(event)) {
+            changeToEarpiece()
+        } else {
             //切换到外发
             changeToSpeaker()
-        } else {
-            changeToEarpiece()
         }
     }
 
@@ -394,9 +394,11 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
             return
         }
         if (isTelephoneReceiverPlay == true) {
+            setScreenOff()
             mAudioManager!!.isSpeakerphoneOn = false //关闭扬声器
             mAudioManager!!.mode = AudioManager.MODE_IN_COMMUNICATION
         } else {
+            setScreenOn()
             mAudioManager!!.isSpeakerphoneOn = true
             mAudioManager!!.mode = AudioManager.MODE_NORMAL
         }
@@ -835,6 +837,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
                 mMediaPlayer!!.stop()
             }
         }
+        setScreenOn()
         unregisterListenerProximity()
         abandonAudioFocus() //取消音频竞争
         releaseTimer()
