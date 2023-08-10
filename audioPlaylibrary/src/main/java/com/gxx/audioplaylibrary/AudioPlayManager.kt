@@ -300,7 +300,7 @@ class AudioPlayManager private constructor(application: Application) : SensorEve
         if (mSensorManager == null) {
             return
         }
-
+        if (mMediaPlayer?.isPlaying == false) return
         // 如果耳机已插入，设置距离传感器失效
         if (isHeadphonesPlugged) {
             if (BuildConfig.DEBUG) {
